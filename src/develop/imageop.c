@@ -997,6 +997,7 @@ static gboolean dt_iop_gui_off_button_press(GtkWidget *w, GdkEventButton *e, gpo
 static void dt_iop_gui_off_callback(GtkToggleButton *togglebutton, gpointer user_data)
 {
   dt_iop_module_t *module = (dt_iop_module_t *)user_data;
+  dt_iop_gui_blend_data_t *bd = (dt_iop_gui_blend_data_t *)module->blend_data;
 
   if(!darktable.gui->reset)
   {
@@ -1019,6 +1020,20 @@ static void dt_iop_gui_off_callback(GtkToggleButton *togglebutton, gpointer user
       //  if current module is set as the CAT instance, remove that setting
       if(module->dev->proxy.chroma_adaptation == module)
         module->dev->proxy.chroma_adaptation = NULL;
+
+      // if a mask is visualized, reset the mask visualization and buttons
+      if(module->request_mask_display)
+      {
+        // reset the mask visualization and buttons
+        module->request_mask_display = DT_DEV_PIXELPIPE_DISPLAY_NONE;
+        module->suppress_mask = 0;
+        if (bd->showmask) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bd->showmask), FALSE);
+        if (bd->suppress) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bd->suppress), FALSE);
+        ++darktable.gui->reset;
+        if(module->mask_indicator) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(module->mask_indicator), FALSE);
+        --darktable.gui->reset;
+        dt_iop_refresh_center(module);
+      }
 
       dt_dev_add_history_item(module->dev, module, FALSE);
 
